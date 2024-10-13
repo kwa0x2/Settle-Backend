@@ -10,13 +10,13 @@ import (
 )
 
 type App struct {
-	Mongo  *mongo.Client
-	Router *gin.Engine
+	MongoDatabase *mongo.Database
+	Router        *gin.Engine
 }
 
 func NewApp() *App {
 	config.LoadEnv()
-	mongoClient := config.ConnectMongoDB()
+	mongoDatabase := config.ConnectMongoDB()
 	router := gin.New()
 
 	router.Use(cors.New(cors.Config{
@@ -28,13 +28,13 @@ func NewApp() *App {
 	}))
 
 	return &App{
-		Mongo:  mongoClient,
-		Router: router,
+		MongoDatabase: mongoDatabase,
+		Router:        router,
 	}
 }
 
 func (a *App) SetupRoutes() {
-	container := di.NewContainer()
+	container := di.NewContainer(a.MongoDatabase)
 
 	routes.AuthRoute(a.Router, container.AuthController)
 }
