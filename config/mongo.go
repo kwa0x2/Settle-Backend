@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func ConnectMongoDB() *mongo.Client {
+func ConnectMongoDB() *mongo.Database {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(os.Getenv("MONGO_URI")).SetServerAPIOptions(serverAPI)
 
@@ -18,20 +18,17 @@ func ConnectMongoDB() *mongo.Client {
 		panic(err)
 	}
 
-	err = client.Ping(context.Background(), nil)
+	err = client.Ping(context.TODO(), nil)
 	if err != nil {
 		panic(err)
 	}
 
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
-
-	if err := client.Database("admin").RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err(); err != nil {
+	err = client.Database("admin").RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err()
+	if err != nil {
 		panic(err)
 	}
+	database := client.Database("settle")
+
 	log.Println("Pinged your deployment. You successfully connected to MongoDB!")
-	return client
+	return database
 }

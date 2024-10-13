@@ -3,6 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kwa0x2/Settle-Backend/config"
+	"github.com/kwa0x2/Settle-Backend/models"
+	"github.com/kwa0x2/Settle-Backend/service"
 	"github.com/kwa0x2/Settle-Backend/utils"
 	"net/http"
 )
@@ -13,10 +15,13 @@ type IAuthController interface {
 }
 
 type authController struct {
+	UserService service.IUserService
 }
 
-func NewAuthController() IAuthController {
-	return &authController{}
+func NewAuthController(userService service.IUserService) IAuthController {
+	return &authController{
+		UserService: userService,
+	}
 }
 
 func (ctrl *authController) SteamLogin(ctx *gin.Context) {
@@ -42,14 +47,29 @@ func (ctrl *authController) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
-	ownedGames, err := utils.GetOwnedGames(steamID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Oyun bilgileri alınamadı: " + err.Error()})
+	totalPlayTime, playTimeErr := utils.GetTotalPlaytime(steamID)
+	if playTimeErr != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Oyun bilgileri alınamadı: " + playTimeErr.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"user":  userInfo,
-		"games": ownedGames,
-	})
+	if totalPlayTime < 30000 { // 500 saaten az ise
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "oyun suresi 500satten az"})
+		return
+	}
+
+	newUser := &models.User{
+		ID:            userInfo.ID,
+		Name:          userInfo.Name,
+		Avatar:        userInfo.Avatar,
+		ProfileURL:    userInfo.ProfileURL,
+		TotalPlaytime: totalPlayTime,
+	}
+
+	if createErr := ctrl.UserService.Create(newUser); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Kullanıcı veritabanına eklenemedi: " + createErr.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, newUser)
 }
