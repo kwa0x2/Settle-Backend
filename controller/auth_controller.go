@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/kwa0x2/Settle-Backend/config"
 	"github.com/kwa0x2/Settle-Backend/models"
 	"github.com/kwa0x2/Settle-Backend/service"
@@ -15,12 +16,14 @@ type IAuthController interface {
 }
 
 type authController struct {
-	UserService service.IUserService
+	UserService     service.IUserService
+	UserRoomService service.IUserRoomService
 }
 
-func NewAuthController(userService service.IUserService) IAuthController {
+func NewAuthController(userService service.IUserService, userRoomService service.IUserRoomService) IAuthController {
 	return &authController{
-		UserService: userService,
+		UserService:     userService,
+		UserRoomService: userRoomService,
 	}
 }
 
@@ -66,10 +69,31 @@ func (ctrl *authController) SteamCallback(ctx *gin.Context) {
 		TotalPlaytime: totalPlayTime,
 	}
 
-	if createErr := ctrl.UserService.Create(newUser); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Kullanıcı veritabanına eklenemedi: " + createErr.Error()})
+	err = ctrl.UserService.Create(newUser)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Kullanıcı veritabanına eklenemedi: " + err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, newUser)
+	roomId, uuidErr := uuid.Parse("00000000-0000-0000-0000-000000000000")
+	if uuidErr != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "invalid uuid format"})
+		return
+	}
+
+	newUserRoom := &models.UserRoom{
+		RoomID: roomId.String(),
+		UserID: userInfo.ID,
+	}
+
+	err = ctrl.UserRoomService.Create(newUserRoom)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "User Room veritabanına eklenemedi: " + err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"user_room": newUserRoom,
+		"user":      newUser,
+	})
 }

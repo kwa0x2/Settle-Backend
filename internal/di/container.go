@@ -16,7 +16,10 @@ func NewContainer(database *mongo.Database) *Container {
 	userRepository := repository.NewUserRepository(database)
 	userService := service.NewUserService(userRepository)
 
+	userRoomRepository := repository.NewUserRoomRepository(database)
+	userRoomService := service.NewUserRoomService(userRoomRepository)
+
 	return &Container{
-		AuthController: controller.NewAuthController(userService),
+		AuthController: controller.NewAuthController(userService, userRoomService),
 	}
 }
