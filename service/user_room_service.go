@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/kwa0x2/Settle-Backend/models"
 	"github.com/kwa0x2/Settle-Backend/repository"
 	"time"
@@ -21,8 +22,14 @@ func NewUserRoomService(userRoomRepository repository.IUserRoomRepository) IUser
 }
 
 func (s *userRoomService) Create(userRoom *models.UserRoom) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	userRoom.CreatedAt = time.Now().UTC()
 	userRoom.UpdatedAt = time.Now().UTC()
 	userRoom.Visible = true
-	return s.UserRoomRepository.Create(userRoom)
+	if err := userRoom.Validate(); err != nil {
+		return err
+	}
+	return s.UserRoomRepository.Create(ctx, userRoom)
 }
