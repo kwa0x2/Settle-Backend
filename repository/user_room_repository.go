@@ -7,7 +7,7 @@ import (
 )
 
 type IUserRoomRepository interface {
-	Create(userRoom *models.UserRoom) error
+	Create(ctx context.Context, userRoom *models.UserRoom) error
 }
 
 type userRoomRepository struct {
@@ -20,7 +20,7 @@ func NewUserRoomRepository(database *mongo.Database) IUserRoomRepository {
 	}
 }
 
-func (r *userRoomRepository) Create(userRoom *models.UserRoom) error {
-	_, err := r.Collection.InsertOne(context.TODO(), userRoom)
+func (r *userRoomRepository) Create(ctx context.Context, userRoom *models.UserRoom) error {
+	_, err := r.Collection.InsertOne(ctx, userRoom)
 	return err
 }

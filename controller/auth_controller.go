@@ -6,7 +6,9 @@ import (
 	"github.com/kwa0x2/Settle-Backend/config"
 	"github.com/kwa0x2/Settle-Backend/models"
 	"github.com/kwa0x2/Settle-Backend/service"
+	"github.com/kwa0x2/Settle-Backend/types"
 	"github.com/kwa0x2/Settle-Backend/utils"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"net/http"
 )
 
@@ -34,30 +36,30 @@ func (ctrl *authController) SteamLogin(ctx *gin.Context) {
 func (ctrl *authController) SteamCallback(ctx *gin.Context) {
 	identity := ctx.Query("openid.identity")
 	if identity == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"erorr": "Identity not found!"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Identity not found!"})
 		return
 	}
 
 	steamID, err := utils.ExtractSteamID(identity)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Steam kimliği çıkarılamadı: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to extract Steam ID: " + err.Error()})
 		return
 	}
 
 	userInfo, userInfoErr := utils.GetUserInfo(steamID)
 	if userInfoErr != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Kullanıcı bilgileri alınamadı: " + userInfoErr.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user information: " + userInfoErr.Error()})
 		return
 	}
 
 	totalPlayTime, playTimeErr := utils.GetTotalPlaytime(steamID)
 	if playTimeErr != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Oyun bilgileri alınamadı: " + playTimeErr.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve playtime information: " + playTimeErr.Error()})
 		return
 	}
 
-	if totalPlayTime < 30000 { // 500 saaten az ise
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "oyun suresi 500satten az"})
+	if totalPlayTime < 30000 { // less than 500 hours
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Playtime must be more than 500 hours"})
 		return
 	}
 
@@ -67,17 +69,12 @@ func (ctrl *authController) SteamCallback(ctx *gin.Context) {
 		Avatar:        userInfo.Avatar,
 		ProfileURL:    userInfo.ProfileURL,
 		TotalPlaytime: totalPlayTime,
-	}
-
-	err = ctrl.UserService.Create(newUser)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Kullanıcı veritabanına eklenemedi: " + err.Error()})
-		return
+		Role:          types.User,
 	}
 
 	roomId, uuidErr := uuid.Parse("00000000-0000-0000-0000-000000000000")
 	if uuidErr != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "invalid uuid format"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid UUID format"})
 		return
 	}
 
@@ -86,9 +83,13 @@ func (ctrl *authController) SteamCallback(ctx *gin.Context) {
 		UserID: userInfo.ID,
 	}
 
-	err = ctrl.UserRoomService.Create(newUserRoom)
+	err = ctrl.UserService.CreateAndJoinRoom(newUser, newUserRoom)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "User Room veritabanına eklenemedi: " + err.Error()})
+		if mongo.IsDuplicateKeyError(err) {
+			ctx.JSON(http.StatusConflict, gin.H{"error": "User already registered"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "An error occurred while creating the user and joining the room: " + err.Error()})
 		return
 	}
 
