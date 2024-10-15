@@ -2,31 +2,25 @@ package usecase
 
 import (
 	"context"
-	"github.com/kwa0x2/Settle-Backend/models"
-	"github.com/kwa0x2/Settle-Backend/repository"
+	"github.com/kwa0x2/Settle-Backend/domain"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 	"time"
 )
 
-type IUserService interface {
-	Create(user *models.User) error
-	CreateAndJoinRoom(user *models.User, userRoom *models.UserRoom) error
+type userUsecase struct {
+	userRepository     domain.UserRepository
+	userRoomRepository domain.UserRoomRepository
 }
 
-type userService struct {
-	UserRepository     repository.IUserRepository
-	UserRoomRepository repository.IUserRoomRepository
-}
-
-func NewUserService(userRepository repository.IUserRepository, userRoomRepository repository.IUserRoomRepository) IUserService {
-	return &userService{
-		UserRepository:     userRepository,
-		UserRoomRepository: userRoomRepository,
+func NewUserUsecase(userRepository domain.UserRepository, userRoomRepository domain.UserRoomRepository) domain.UserUsecase {
+	return &userUsecase{
+		userRepository:     userRepository,
+		userRoomRepository: userRoomRepository,
 	}
 }
 
-func (s *userService) Create(user *models.User) error {
+func (uu *userUsecase) Create(user *domain.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -35,17 +29,17 @@ func (s *userService) Create(user *models.User) error {
 	if err := user.Validate(); err != nil {
 		return err
 	}
-	return s.UserRepository.Create(ctx, user)
+	return uu.userRepository.Create(ctx, user)
 }
 
-func (s *userService) CreateAndJoinRoom(user *models.User, userRoom *models.UserRoom) error {
+func (uu *userUsecase) CreateAndJoinRoom(user *domain.User, userRoom *domain.UserRoom) error {
 	wc := writeconcern.Majority()
 	txnOptions := options.Transaction().SetWriteConcern(wc)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	session, err := s.UserRepository.GetDatabase().Client().StartSession()
+	session, err := uu.userRepository.GetDatabase().Client().StartSession()
 	if err != nil {
 		return err
 	}
@@ -57,7 +51,7 @@ func (s *userService) CreateAndJoinRoom(user *models.User, userRoom *models.User
 		if validateErr := user.Validate(); validateErr != nil {
 			return nil, validateErr
 		}
-		if userCreateErr := s.UserRepository.Create(txCtx, user); userCreateErr != nil {
+		if userCreateErr := uu.userRepository.Create(txCtx, user); userCreateErr != nil {
 			return nil, userCreateErr
 		}
 
@@ -68,7 +62,7 @@ func (s *userService) CreateAndJoinRoom(user *models.User, userRoom *models.User
 		if userRoomValidateErr := userRoom.Validate(); userRoomValidateErr != nil {
 			return nil, userRoomValidateErr
 		}
-		if userRoomCreateErr := s.UserRoomRepository.Create(txCtx, userRoom); userRoomCreateErr != nil {
+		if userRoomCreateErr := uu.userRoomRepository.Create(txCtx, userRoom); userRoomCreateErr != nil {
 			return nil, userRoomCreateErr
 		}
 

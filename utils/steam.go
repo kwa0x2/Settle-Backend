@@ -5,9 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 )
+
+func GetSteamLoginURL(redirectUrl string) string {
+	return fmt.Sprintf(
+		"https://steamcommunity.com/openid/login?openid.mode=checkid_setup&openid.ns=http://specs.openid.net/auth/2.0&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&openid.return_to=%s",
+		url.QueryEscape(redirectUrl),
+	)
+}
 
 func ExtractSteamID(openIDURL string) (string, error) {
 	parsedURL, err := url.Parse(openIDURL)
@@ -26,8 +32,8 @@ type UserInfo struct {
 	ProfileURL string `json:"profile_url"`
 }
 
-func GetUserInfo(steamID string) (*UserInfo, error) {
-	url := fmt.Sprintf("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%s", os.Getenv("STEAM_API_KEY"), steamID)
+func GetUserInfo(steamID string, apiKey string) (*UserInfo, error) {
+	url := fmt.Sprintf("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%s", apiKey, steamID)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -62,8 +68,8 @@ func GetUserInfo(steamID string) (*UserInfo, error) {
 	return userInfo, nil
 }
 
-func GetTotalPlaytime(steamID string) (int, error) {
-	url := fmt.Sprintf("https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=%s&steamid=%s&format=json&include_played_free_games=1&include_appinfo=1", os.Getenv("STEAM_API_KEY"), steamID)
+func GetTotalPlaytime(steamID string, apiKey string) (int, error) {
+	url := fmt.Sprintf("https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=%s&steamid=%s&format=json&include_played_free_games=1&include_appinfo=1", apiKey, steamID)
 
 	resp, err := http.Get(url)
 	if err != nil {
