@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-func ConnectMongoDB(env *Env) mongo.Client {
+func ConnectMongoDB(env *Env) *mongo.Database {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(env.MongoUri).SetServerAPIOptions(serverAPI)
 
@@ -26,16 +26,8 @@ func ConnectMongoDB(env *Env) mongo.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
+	database := client.Database(env.MongoDBName)
 
 	log.Println("Pinged your deployment. You successfully connected to MongoDB!")
-	return *client
-}
-
-func CloseMongoDBConnection(client mongo.Client) {
-	err := client.Disconnect(context.TODO())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Connection to MongoDB closed.")
+	return database
 }

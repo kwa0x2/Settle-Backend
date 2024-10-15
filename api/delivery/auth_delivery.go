@@ -1,27 +1,26 @@
-package controller
+package delivery
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/kwa0x2/Settle-Backend/bootstrap"
 	"github.com/kwa0x2/Settle-Backend/domain"
-	"github.com/kwa0x2/Settle-Backend/models"
-	"github.com/kwa0x2/Settle-Backend/types"
+	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"github.com/kwa0x2/Settle-Backend/utils"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"net/http"
 )
 
-type AuthController struct {
+type AuthDelivery struct {
 	UserUsecase domain.UserUsecase
 	Env         *bootstrap.Env
 }
 
-func (ctrl *AuthController) SteamLogin(ctx *gin.Context) {
-	ctx.Redirect(http.StatusFound, utils.GetSteamLoginURL(ctrl.Env))
+func (ad *AuthDelivery) SteamLogin(ctx *gin.Context) {
+	ctx.Redirect(http.StatusFound, utils.GetSteamLoginURL(ad.Env.SteamRedirectUrl))
 }
 
-func (ac *AuthController) SteamCallback(ctx *gin.Context) {
+func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 	identity := ctx.Query("openid.identity")
 	if identity == "" {
 		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Identity not found!"})
@@ -34,13 +33,13 @@ func (ac *AuthController) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
-	userInfo, userInfoErr := utils.GetUserInfo(steamID, ac.Env)
+	userInfo, userInfoErr := utils.GetUserInfo(steamID, ad.Env.SteamApiKey)
 	if userInfoErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to retrieve user information: " + userInfoErr.Error()})
 		return
 	}
 
-	totalPlayTime, playTimeErr := utils.GetTotalPlaytime(steamID, ac.Env)
+	totalPlayTime, playTimeErr := utils.GetTotalPlaytime(steamID, ad.Env.SteamApiKey)
 	if playTimeErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to retrieve playtime information: " + playTimeErr.Error()})
 		return
@@ -51,7 +50,7 @@ func (ac *AuthController) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
-	newUser := &models.User{
+	newUser := &domain.User{
 		ID:            userInfo.ID,
 		Name:          userInfo.Name,
 		Avatar:        userInfo.Avatar,
@@ -66,12 +65,12 @@ func (ac *AuthController) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
-	newUserRoom := &models.UserRoom{
+	newUserRoom := &domain.UserRoom{
 		RoomID: roomId.String(),
 		UserID: userInfo.ID,
 	}
 
-	err = ac.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
+	err = ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "User already registered"})
@@ -81,13 +80,13 @@ func (ac *AuthController) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, accessTokenErr := utils.CreateAccessToken(userInfo.ID, ac.Env.AccessTokenSecret, ac.Env.AccessTokenExpiryHour)
+	accessToken, accessTokenErr := utils.CreateAccessToken(userInfo.ID, ad.Env.AccessTokenSecret, ad.Env.AccessTokenExpiryHour)
 	if accessTokenErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: accessTokenErr.Error()})
 		return
 	}
 
-	refreshToken, refreshTokenErr := utils.CreateRefreshToken(userInfo.ID, ac.Env.RefreshTokenSecret, ac.Env.RefreshTokenExpiryHour)
+	refreshToken, refreshTokenErr := utils.CreateRefreshToken(userInfo.ID, ad.Env.RefreshTokenSecret, ad.Env.RefreshTokenExpiryHour)
 	if refreshTokenErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: refreshTokenErr.Error()})
 		return

@@ -2,32 +2,29 @@ package repository
 
 import (
 	"context"
-	"github.com/kwa0x2/Settle-Backend/models"
+	"github.com/kwa0x2/Settle-Backend/domain"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type IUserRepository interface {
-	Create(ctx context.Context, user *models.User) error
-	GetDatabase() *mongo.Database
-}
-
 type userRepository struct {
-	Collection *mongo.Collection
-	Database   *mongo.Database
+	database   *mongo.Database
+	collection string
 }
 
-func NewUserRepository(database *mongo.Database) IUserRepository {
+func NewUserRepository(db *mongo.Database, collection string) domain.UserRepository {
 	return &userRepository{
-		Collection: database.Collection("users"),
-		Database:   database,
+		database:   db,
+		collection: collection,
 	}
 }
 
-func (r *userRepository) Create(ctx context.Context, user *models.User) error {
-	_, err := r.Collection.InsertOne(ctx, user)
+func (ur *userRepository) Create(ctx context.Context, user *domain.User) error {
+	collection := ur.database.Collection(ur.collection)
+
+	_, err := collection.InsertOne(ctx, user)
 	return err
 }
 
-func (r *userRepository) GetDatabase() *mongo.Database {
-	return r.Database
+func (ur *userRepository) GetDatabase() *mongo.Database {
+	return ur.database
 }

@@ -2,26 +2,21 @@ package usecase
 
 import (
 	"context"
-	"github.com/kwa0x2/Settle-Backend/models"
-	"github.com/kwa0x2/Settle-Backend/repository"
+	"github.com/kwa0x2/Settle-Backend/domain"
 	"time"
 )
 
-type IUserRoomService interface {
-	Create(userRoom *models.UserRoom) error
+type userRoomUsecase struct {
+	userRoomRepository domain.UserRoomRepository
 }
 
-type userRoomService struct {
-	UserRoomRepository repository.IUserRoomRepository
-}
-
-func NewUserRoomService(userRoomRepository repository.IUserRoomRepository) IUserRoomService {
-	return &userRoomService{
-		UserRoomRepository: userRoomRepository,
+func NewUserRoomUsecase(userRoomRepository domain.UserRoomRepository) domain.UserRoomUsecase {
+	return &userRoomUsecase{
+		userRoomRepository: userRoomRepository,
 	}
 }
 
-func (s *userRoomService) Create(userRoom *models.UserRoom) error {
+func (uru *userRoomUsecase) Create(userRoom *domain.UserRoom) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -31,5 +26,5 @@ func (s *userRoomService) Create(userRoom *models.UserRoom) error {
 	if err := userRoom.Validate(); err != nil {
 		return err
 	}
-	return s.UserRoomRepository.Create(ctx, userRoom)
+	return uru.userRoomRepository.Create(ctx, userRoom)
 }
