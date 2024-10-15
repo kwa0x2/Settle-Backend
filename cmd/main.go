@@ -10,10 +10,10 @@ func main() {
 	app := bootstrap.App()
 	env := app.Env
 	db := app.MongoDatabase
-
+	ss := app.SocketServer
 	gin := gin.Default()
 
-	route.Setup(env, db, gin)
+	route.Setup(env, db, gin, ss)
 
 	gin.Run(env.ServerAddress)
 }
