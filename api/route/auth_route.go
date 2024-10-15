@@ -2,7 +2,7 @@ package route
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kwa0x2/Settle-Backend/api/delivery"
+	"github.com/kwa0x2/Settle-Backend/api/http/delivery"
 	"github.com/kwa0x2/Settle-Backend/bootstrap"
 	"github.com/kwa0x2/Settle-Backend/domain"
 	"github.com/kwa0x2/Settle-Backend/repository"
