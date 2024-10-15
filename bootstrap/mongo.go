@@ -1,4 +1,4 @@
-package config
+package bootstrap
 
 import (
 	"context"
@@ -6,29 +6,36 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
-	"os"
 )
 
-func ConnectMongoDB() *mongo.Database {
+func ConnectMongoDB(env *Env) mongo.Client {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(os.Getenv("MONGO_URI")).SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI(env.MongoUri).SetServerAPIOptions(serverAPI)
 
 	client, err := mongo.Connect(opts)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = client.Ping(context.TODO(), nil)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = client.Database("admin").RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	database := client.Database("settle")
 
 	log.Println("Pinged your deployment. You successfully connected to MongoDB!")
-	return database
+	return *client
+}
+
+func CloseMongoDBConnection(client mongo.Client) {
+	err := client.Disconnect(context.TODO())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Connection to MongoDB closed.")
 }
