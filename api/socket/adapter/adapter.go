@@ -5,6 +5,7 @@ import (
 	"github.com/kwa0x2/Settle-Backend/domain"
 	"github.com/zishang520/engine.io/utils"
 	"github.com/zishang520/socket.io/socket"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
@@ -31,7 +32,7 @@ func (adapter *socketAdapter) HandleConnection() {
 
 			data, ok := args[0].(map[string]interface{})
 			if !ok {
-				utils.Log().Error(`socket message type error`) // Log an error if the data type is incorrect
+				utils.Log().Error(`socket message type error`)
 				return
 			}
 
@@ -43,6 +44,7 @@ func (adapter *socketAdapter) HandleConnection() {
 
 			if attachmentData, ok := data["attachment"].(map[string]interface{}); ok {
 				message.Attachment = &domain.Attachment{
+					ID:          attachmentData["id"].(primitive.ObjectID),
 					Filename:    attachmentData["filename"].(string),
 					Size:        int(attachmentData["size"].(float64)),
 					Url:         attachmentData["url"].(string),
@@ -54,6 +56,7 @@ func (adapter *socketAdapter) HandleConnection() {
 
 			if repliedMessageData, ok := data["replied_message"].(map[string]interface{}); ok {
 				message.RepliedMessage = &domain.Message{
+					ID:        repliedMessageData["id"].(primitive.ObjectID),
 					Content:   repliedMessageData["content"].(string),
 					SenderID:  repliedMessageData["sender_id"].(string),
 					RoomID:    repliedMessageData["room_id"].(string),
@@ -69,6 +72,28 @@ func (adapter *socketAdapter) HandleConnection() {
 			}
 
 			adapter.gateway.EmitRoom("00000000-0000-0000-0000-000000000000", "message", message)
+		})
+
+		socketio.On("deleteMessage", func(args ...any) {
+			fmt.Println("delete message triggered")
+
+			data, ok := args[0].(map[string]interface{})
+			if !ok {
+				utils.Log().Error(`socket message type error`)
+				return
+			}
+
+			messageID, err := primitive.ObjectIDFromHex(data["id"].(string))
+			if err != nil {
+				fmt.Errorf("invalid message id: %v", err)
+				return
+			}
+
+			err = adapter.messageUsecase.SoftDelete(messageID)
+			if err != nil {
+				fmt.Println("error creating message:", err)
+				return
+			}
 		})
 	})
 
