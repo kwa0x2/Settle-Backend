@@ -20,4 +20,6 @@ func NewAuthRoute(env *bootstrap.Env, db *mongo.Database, group *gin.RouterGroup
 
 	group.GET("auth/login/steam", ad.SteamLogin)
 	group.GET("auth/login/steam/callback", ad.SteamCallback)
+	group.GET("auth/refresh", ad.RefreshToken)
+
 }

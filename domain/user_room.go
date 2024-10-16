@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"time"
 )
 
@@ -27,7 +28,7 @@ func (u *UserRoom) Validate() error {
 }
 
 type UserRoomRepository interface {
-	Create(ctx context.Context, userRoom *UserRoom) error
+	Create(ctx context.Context, userRoom *UserRoom) (*mongo.InsertOneResult, error)
 }
 
 type UserRoomUsecase interface {

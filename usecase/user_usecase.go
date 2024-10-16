@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 	"github.com/kwa0x2/Settle-Backend/domain"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 	"time"
@@ -62,9 +64,12 @@ func (uu *userUsecase) CreateAndJoinRoom(user *domain.User, userRoom *domain.Use
 		if userRoomValidateErr := userRoom.Validate(); userRoomValidateErr != nil {
 			return nil, userRoomValidateErr
 		}
-		if userRoomCreateErr := uu.userRoomRepository.Create(txCtx, userRoom); userRoomCreateErr != nil {
+		result, userRoomCreateErr := uu.userRoomRepository.Create(txCtx, userRoom)
+		if userRoomCreateErr != nil {
 			return nil, userRoomCreateErr
 		}
+
+		userRoom.ID = primitive.ObjectID(result.InsertedID.(bson.ObjectID))
 
 		return nil, nil
 	}, txnOptions)

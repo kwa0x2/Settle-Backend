@@ -70,16 +70,6 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		UserID: userInfo.ID,
 	}
 
-	err = ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
-	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "User already registered"})
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "An error occurred while creating the user and joining the room: " + err.Error()})
-		return
-	}
-
 	accessToken, accessTokenErr := utils.CreateAccessToken(userInfo.ID, ad.Env.AccessTokenSecret, ad.Env.AccessTokenExpiryHour)
 	if accessTokenErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: accessTokenErr.Error()})
@@ -92,8 +82,47 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
+	err = ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			ctx.JSON(http.StatusInternalServerError, domain.LoginResponse{
+				AccessToken:  accessToken,
+				RefreshToken: refreshToken,
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "An error occurred while creating the user and joining the room: " + err.Error()})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, domain.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	})
+}
+
+func (ad *AuthDelivery) RefreshToken(ctx *gin.Context) {
+	var req domain.RefreshTokenRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Invalid request body: " + err.Error()})
+		return
+	}
+
+	userID, err := utils.IsAuthorized(req.RefreshToken, ad.Env.RefreshTokenSecret)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Invalid refresh token: " + err.Error()})
+		return
+	}
+
+	accessToken, accessTokenErr := utils.CreateAccessToken(userID, ad.Env.AccessTokenSecret, ad.Env.AccessTokenExpiryHour)
+	if accessTokenErr != nil {
+		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: accessTokenErr.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, domain.RefreshResponse{
+		AccessToken: accessToken,
+	})
+
 }

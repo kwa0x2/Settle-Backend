@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 	"github.com/kwa0x2/Settle-Backend/domain"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"time"
 )
 
@@ -26,5 +28,11 @@ func (uru *userRoomUsecase) Create(userRoom *domain.UserRoom) error {
 	if err := userRoom.Validate(); err != nil {
 		return err
 	}
-	return uru.userRoomRepository.Create(ctx, userRoom)
+	result, err := uru.userRoomRepository.Create(ctx, userRoom)
+	if err != nil {
+		return err
+	}
+
+	userRoom.ID = primitive.ObjectID(result.InsertedID.(bson.ObjectID))
+	return nil
 }
