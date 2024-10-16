@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  settle_api:
+    build: .
+    container_name: settle_api
+    ports:
+      - "9090:9090"
+    restart: on-failure
+    env_file:
+      - .env

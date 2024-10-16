@@ -23,3 +23,11 @@ func (g *socketGateway) OnConnection(callback func(socketio *socket.Socket)) {
 		callback(socketio)
 	})
 }
+
+func (g *socketGateway) EmitRoom(room, event string, data interface{}) {
+	g.server.Of(g.namespace, nil).To(socket.Room(room)).Emit(event, data)
+}
+
+func (g *socketGateway) JoinRoom(socketio *socket.Socket, room string) {
+	socketio.Join(socket.Room(room))
+}

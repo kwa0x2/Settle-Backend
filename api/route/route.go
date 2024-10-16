@@ -11,5 +11,5 @@ func Setup(env *bootstrap.Env, db *mongo.Database, router *gin.Engine, server *s
 	publicRouter := router.Group("/api/v1")
 
 	NewAuthRoute(env, db, publicRouter)
-	NewSocketRoute(server, router)
+	NewSocketRoute(server, router, db)
 }

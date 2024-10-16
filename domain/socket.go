@@ -8,4 +8,6 @@ type SocketAdapter interface {
 
 type SocketGateway interface {
 	OnConnection(callback func(socketio *socket.Socket))
+	EmitRoom(room, event string, data interface{})
+	JoinRoom(socketio *socket.Socket, room string)
 }

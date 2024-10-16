@@ -18,9 +18,8 @@ func NewUserRoomRepository(db *mongo.Database, collection string) domain.UserRoo
 	}
 }
 
-func (urr *userRoomRepository) Create(ctx context.Context, userRoom *domain.UserRoom) error {
+func (urr *userRoomRepository) Create(ctx context.Context, userRoom *domain.UserRoom) (*mongo.InsertOneResult, error) {
 	collection := urr.database.Collection(urr.collection)
 
-	_, err := collection.InsertOne(ctx, userRoom)
-	return err
+	return collection.InsertOne(ctx, userRoom)
 }
