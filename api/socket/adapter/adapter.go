@@ -6,6 +6,7 @@ import (
 	"github.com/zishang520/engine.io/utils"
 	"github.com/zishang520/socket.io/socket"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"time"
 )
 
@@ -83,7 +84,7 @@ func (adapter *socketAdapter) HandleConnection() {
 				return
 			}
 
-			messageID, err := primitive.ObjectIDFromHex(data["id"].(string))
+			messageID, err := bson.ObjectIDFromHex(data["id"].(string))
 			if err != nil {
 				fmt.Errorf("invalid message id: %v", err)
 				return

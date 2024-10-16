@@ -39,11 +39,11 @@ func (mu *messageUsecase) Create(message *domain.Message) error {
 	return nil
 }
 
-func (mu *messageUsecase) SoftDelete(messageID primitive.ObjectID) error {
+func (mu *messageUsecase) SoftDelete(messageID bson.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	update := bson.M{"$set": bson.M{"room_id": "asdasda"}}
+	update := bson.D{{"$set", bson.D{{"deleted_at", time.Now().UTC()}}}}
 	_, err := mu.messageRepository.UpdateByID(ctx, messageID, update)
 	if err != nil {
 		return err

@@ -34,10 +34,10 @@ func (m *Message) Validate() error {
 
 type MessageRepository interface {
 	Create(ctx context.Context, message *Message) (*mongo.InsertOneResult, error)
-	UpdateByID(ctx context.Context, messageID primitive.ObjectID, update bson.M) (interface{}, error)
+	UpdateByID(ctx context.Context, messageID bson.ObjectID, update bson.D) (interface{}, error)
 }
 
 type MessageUsecase interface {
 	Create(message *Message) error
-	SoftDelete(messageID primitive.ObjectID) error
+	SoftDelete(messageID bson.ObjectID) error
 }

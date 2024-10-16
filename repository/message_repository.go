@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"github.com/kwa0x2/Settle-Backend/domain"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -26,7 +25,7 @@ func (mr *messageRepository) Create(ctx context.Context, message *domain.Message
 	return collection.InsertOne(ctx, message)
 }
 
-func (mr *messageRepository) UpdateByID(ctx context.Context, messageID primitive.ObjectID, update bson.M) (interface{}, error) {
+func (mr *messageRepository) UpdateByID(ctx context.Context, messageID bson.ObjectID, update bson.D) (interface{}, error) {
 	collection := mr.database.Collection(mr.collection)
 
 	result, err := collection.UpdateByID(ctx, messageID, update)
