@@ -16,30 +16,16 @@ type AuthDelivery struct {
 	Env         *bootstrap.Env
 }
 
-func (ad *AuthDelivery) SteamLogin(ctx *gin.Context) {
-	ctx.Redirect(http.StatusFound, utils.GetSteamLoginURL(ad.Env.SteamRedirectUrl))
-}
+func (ad *AuthDelivery) Login(ctx *gin.Context) {
+	var req domain.LoginRequest
 
-func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
-	identity := ctx.Query("openid.identity")
-	if identity == "" {
-		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Identity not found!"})
-		return
-	}
-
-	steamID, err := utils.ExtractSteamID(identity)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to extract Steam ID: " + err.Error()})
-		return
-	}
-
-	userInfo, userInfoErr := utils.GetUserInfo(steamID, ad.Env.SteamApiKey)
+	userInfo, userInfoErr := utils.GetUserInfo(req.SteamID, ad.Env.SteamApiKey)
 	if userInfoErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to retrieve user information: " + userInfoErr.Error()})
 		return
 	}
 
-	totalPlayTime, playTimeErr := utils.GetTotalPlaytime(steamID, ad.Env.SteamApiKey)
+	totalPlayTime, playTimeErr := utils.GetTotalPlaytime(req.SteamID, ad.Env.SteamApiKey)
 	if playTimeErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to retrieve playtime information: " + playTimeErr.Error()})
 		return
@@ -82,10 +68,10 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
-	err = ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
+	err := ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			ctx.JSON(http.StatusInternalServerError, domain.LoginResponse{
+			ctx.JSON(http.StatusOK, domain.LoginResponse{
 				AccessToken:  accessToken,
 				RefreshToken: refreshToken,
 			})

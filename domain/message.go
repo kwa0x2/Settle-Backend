@@ -5,6 +5,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"time"
 )
@@ -33,8 +34,10 @@ func (m *Message) Validate() error {
 
 type MessageRepository interface {
 	Create(ctx context.Context, message *Message) (*mongo.InsertOneResult, error)
+	UpdateByID(ctx context.Context, messageID primitive.ObjectID, update bson.M) (interface{}, error)
 }
 
 type MessageUsecase interface {
 	Create(message *Message) error
+	SoftDelete(messageID primitive.ObjectID) error
 }
