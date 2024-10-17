@@ -19,6 +19,11 @@ type AuthDelivery struct {
 func (ad *AuthDelivery) Login(ctx *gin.Context) {
 	var req domain.LoginRequest
 
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "JSON Bind Error"})
+		return
+	}
+
 	userInfo, userInfoErr := utils.GetUserInfo(req.SteamID, ad.Env.SteamApiKey)
 	if userInfoErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to retrieve user information: " + userInfoErr.Error()})
