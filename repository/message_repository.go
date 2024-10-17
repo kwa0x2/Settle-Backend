@@ -5,6 +5,7 @@ import (
 	"github.com/kwa0x2/Settle-Backend/domain"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type messageRepository struct {
@@ -34,4 +35,22 @@ func (mr *messageRepository) UpdateByID(ctx context.Context, messageID bson.Obje
 	}
 
 	return result, err
+}
+
+func (mr *messageRepository) Find(ctx context.Context, filter bson.D, opts *options.FindOptionsBuilder) ([]domain.Message, error) {
+	collection := mr.database.Collection(mr.collection)
+
+	cursor, err := collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var messages []domain.Message
+
+	if err = cursor.All(ctx, &messages); err != nil {
+		return nil, err
+	}
+
+	return messages, nil
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/kwa0x2/Settle-Backend/domain"
 	"github.com/zishang520/engine.io/utils"
 	"github.com/zishang520/socket.io/socket"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"time"
 )
@@ -45,7 +44,7 @@ func (adapter *socketAdapter) HandleConnection() {
 
 			if attachmentData, ok := data["attachment"].(map[string]interface{}); ok {
 				message.Attachment = &domain.Attachment{
-					ID:          attachmentData["id"].(primitive.ObjectID),
+					ID:          attachmentData["id"].(bson.ObjectID),
 					Filename:    attachmentData["filename"].(string),
 					Size:        int(attachmentData["size"].(float64)),
 					Url:         attachmentData["url"].(string),
@@ -57,7 +56,7 @@ func (adapter *socketAdapter) HandleConnection() {
 
 			if repliedMessageData, ok := data["replied_message"].(map[string]interface{}); ok {
 				message.RepliedMessage = &domain.Message{
-					ID:        repliedMessageData["id"].(primitive.ObjectID),
+					ID:        repliedMessageData["id"].(bson.ObjectID),
 					Content:   repliedMessageData["content"].(string),
 					SenderID:  repliedMessageData["sender_id"].(string),
 					RoomID:    repliedMessageData["room_id"].(string),
