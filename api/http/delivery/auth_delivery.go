@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/kwa0x2/Settle-Backend/bootstrap"
@@ -9,6 +10,7 @@ import (
 	"github.com/kwa0x2/Settle-Backend/utils"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"net/http"
+	"time"
 )
 
 type AuthDelivery struct {
@@ -16,21 +18,30 @@ type AuthDelivery struct {
 	Env         *bootstrap.Env
 }
 
-func (ad *AuthDelivery) Login(ctx *gin.Context) {
-	var req domain.LoginRequest
+func (ad *AuthDelivery) SteamLogin(ctx *gin.Context) {
+	ctx.Redirect(http.StatusFound, utils.GetSteamLoginURL(ad.Env.SteamRedirectUrl))
+}
 
-	if err := ctx.BindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "JSON Bind Error"})
+func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
+	identity := ctx.Query("openid.identity")
+	if identity == "" {
+		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Identity not found!"})
 		return
 	}
 
-	userInfo, userInfoErr := utils.GetUserInfo(req.SteamID, ad.Env.SteamApiKey)
+	steamID, err := utils.ExtractSteamID(identity)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to extract Steam ID: " + err.Error()})
+		return
+	}
+
+	userInfo, userInfoErr := utils.GetUserInfo(steamID, ad.Env.SteamApiKey)
 	if userInfoErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to retrieve user information: " + userInfoErr.Error()})
 		return
 	}
 
-	totalPlayTime, playTimeErr := utils.GetTotalPlaytime(req.SteamID, ad.Env.SteamApiKey)
+	totalPlayTime, playTimeErr := utils.GetTotalPlaytime(steamID, ad.Env.SteamApiKey)
 	if playTimeErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Failed to retrieve playtime information: " + playTimeErr.Error()})
 		return
@@ -61,35 +72,33 @@ func (ad *AuthDelivery) Login(ctx *gin.Context) {
 		UserID: userInfo.ID,
 	}
 
-	accessToken, accessTokenErr := utils.CreateAccessToken(userInfo.ID, ad.Env.AccessTokenSecret, ad.Env.AccessTokenExpiryHour)
+	accessToken, accessTokenErr := utils.CreateAccessToken(newUser, ad.Env.AccessTokenSecret, ad.Env.AccessTokenExpiryHour)
 	if accessTokenErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: accessTokenErr.Error()})
 		return
 	}
 
-	refreshToken, refreshTokenErr := utils.CreateRefreshToken(userInfo.ID, ad.Env.RefreshTokenSecret, ad.Env.RefreshTokenExpiryHour)
+	refreshToken, refreshTokenErr := utils.CreateRefreshToken(newUser, ad.Env.RefreshTokenSecret, ad.Env.RefreshTokenExpiryHour)
 	if refreshTokenErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: refreshTokenErr.Error()})
 		return
 	}
 
-	err := ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
+	redirectUrl := fmt.Sprintf("http://100.64.75.37:4724/en/auth/login?access=%s&refresh=%s", accessToken, refreshToken)
+
+	fmt.Println(redirectUrl)
+	err = ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			ctx.JSON(http.StatusOK, domain.LoginResponse{
-				AccessToken:  accessToken,
-				RefreshToken: refreshToken,
-			})
+			time.Sleep(1000 * time.Millisecond)
+			ctx.Redirect(http.StatusTemporaryRedirect, redirectUrl)
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "An error occurred while creating the user and joining the room: " + err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, domain.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	})
+	ctx.Redirect(http.StatusTemporaryRedirect, redirectUrl)
 }
 
 func (ad *AuthDelivery) RefreshToken(ctx *gin.Context) {
@@ -100,13 +109,13 @@ func (ad *AuthDelivery) RefreshToken(ctx *gin.Context) {
 		return
 	}
 
-	userID, err := utils.IsAuthorized(req.RefreshToken, ad.Env.RefreshTokenSecret)
+	userData, err := utils.IsAuthorized(req.RefreshToken, ad.Env.RefreshTokenSecret)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Invalid refresh token: " + err.Error()})
 		return
 	}
 
-	accessToken, accessTokenErr := utils.CreateAccessToken(userID, ad.Env.AccessTokenSecret, ad.Env.AccessTokenExpiryHour)
+	accessToken, accessTokenErr := utils.CreateAccessToken(userData, ad.Env.AccessTokenSecret, ad.Env.AccessTokenExpiryHour)
 	if accessTokenErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: accessTokenErr.Error()})
 		return
@@ -115,5 +124,8 @@ func (ad *AuthDelivery) RefreshToken(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, domain.RefreshResponse{
 		AccessToken: accessToken,
 	})
+}
 
+func (ad *AuthDelivery) CheckAuth(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, true)
 }

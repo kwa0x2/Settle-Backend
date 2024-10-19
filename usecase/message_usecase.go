@@ -64,3 +64,15 @@ func (mu *messageUsecase) GetByRoomID(roomID uuid.UUID) ([]domain.Message, error
 	}
 	return result, err
 }
+
+func (mu *messageUsecase) EditMessage(messageID bson.ObjectID, content string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	update := bson.D{{"$set", bson.D{{"content", content}, {"updated_at", time.Now().UTC()}}}}
+	_, err := mu.messageRepository.UpdateByID(ctx, messageID, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}

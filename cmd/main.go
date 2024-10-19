@@ -11,9 +11,10 @@ func main() {
 	env := app.Env
 	db := app.MongoDatabase
 	ss := app.SocketServer
+	s3 := app.S3Client
 	gin := gin.Default()
 
-	route.Setup(env, db, gin, ss)
+	route.Setup(env, db, gin, ss, s3)
 
 	gin.Run(env.ServerAddress)
 }
