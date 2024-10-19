@@ -1,8 +1,13 @@
 package utils
 
 import (
+	"fmt"
+	"github.com/kwa0x2/Settle-Backend/domain"
+	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"github.com/zishang520/engine.io/utils"
 	socketUtils "github.com/zishang520/engine.io/utils"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"time"
 )
 
 // region "ExtractArgs" extracts the data and callback function from socket arguments.
@@ -62,3 +67,78 @@ func LogSuccess(callback func([]interface{}, error), message string) {
 }
 
 // endregion
+
+func ParseObjectIDFromData(data map[string]interface{}, key string) (bson.ObjectID, error) {
+	idStr, ok := data[key].(string)
+	if !ok {
+		return bson.ObjectID{}, fmt.Errorf("%s must be a string", key)
+	}
+
+	objectID := bson.ObjectID{}
+	objectID, err := bson.ObjectIDFromHex(idStr)
+	if err != nil {
+		return bson.ObjectID{}, fmt.Errorf("invalid ObjectID format for %s: %w", key, err)
+	}
+
+	return objectID, nil
+}
+
+func ExtractString(data map[string]interface{}, key string) string {
+	if value, ok := data[key].(string); ok {
+		return value
+	}
+	return ""
+}
+
+func ParseAttachment(data map[string]interface{}) (*domain.Attachment, error) {
+	attachmentID, err := ParseObjectIDFromData(data, "id")
+	if err != nil {
+		return nil, fmt.Errorf("Invalid attachment ID format")
+	}
+
+	return &domain.Attachment{
+		ID:          attachmentID,
+		Filename:    ExtractString(data, "filename"),
+		Size:        int64(data["size"].(float64)),
+		Url:         ExtractString(data, "url"),
+		ContentType: ExtractString(data, "content_type"),
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+	}, nil
+}
+
+func ParseRepliedMessage(data map[string]interface{}) (*domain.Message, error) {
+	repliedMessageID, err := ParseObjectIDFromData(data, "id")
+	if err != nil {
+		return nil, fmt.Errorf("Invalid replied message ID format")
+	}
+
+	roomID, err := ParseObjectIDFromData(data, "room_id")
+	if err != nil {
+		return nil, fmt.Errorf("Invalid replied room ID format")
+	}
+
+	readStatus, err := parseReadStatus(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.Message{
+		ID:         repliedMessageID,
+		Content:    ExtractString(data, "content"),
+		SenderID:   ExtractString(data, "sender_id"),
+		RoomID:     roomID,
+		ReadStatus: readStatus,
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}, nil
+}
+
+func parseReadStatus(data map[string]interface{}) (types.ReadStatus, error) {
+	if rs, ok := data["read_status"].(string); ok {
+		if rs == string(types.Read) || rs == string(types.Unread) {
+			return types.ReadStatus(rs), nil
+		}
+	}
+	return "", fmt.Errorf("Invalid read_status value")
+}

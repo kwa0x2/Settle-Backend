@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -18,10 +17,10 @@ const (
 type Message struct {
 	ID             bson.ObjectID    `bson:"_id,omitempty"`
 	Content        string           `bson:"content,omitempty"`
-	SenderID       string           `bson:"sender_id" validate:"required"` // uuid.UUID
-	RoomID         string           `bson:"room_id" validate:"required"`   // uuid.UUID
-	RepliedMessage *Message         `bson:"replied_message,omitempty"`     // Referans verilen mesaj
-	Attachment     *Attachment      `bson:"attachment,omitempty"`          // Eklenen dosya
+	SenderID       string           `bson:"sender_id" validate:"required"`
+	RoomID         bson.ObjectID    `bson:"room_id" validate:"required"`
+	RepliedMessage *Message         `bson:"replied_message,omitempty"` // Referans verilen mesaj
+	Attachment     *Attachment      `bson:"attachment,omitempty"`      // Eklenen dosya
 	ReadStatus     types.ReadStatus `bson:"read_status" validate:"required"`
 	CreatedAt      time.Time        `bson:"created_at"  validate:"required"`
 	UpdatedAt      time.Time        `bson:"updated_at"  validate:"required"`
@@ -35,17 +34,21 @@ func (m *Message) Validate() error {
 
 type MessageRepository interface {
 	Create(ctx context.Context, message *Message) (*mongo.InsertOneResult, error)
-	UpdateByID(ctx context.Context, messageID bson.ObjectID, update bson.D) (interface{}, error)
+	UpdateByID(ctx context.Context, messageID bson.ObjectID, update bson.D) error
 	Find(ctx context.Context, filter bson.D, opts *options.FindOptionsBuilder) ([]Message, error)
+	FindOne(ctx context.Context, filter bson.D) (Message, error)
+	GetDatabase() *mongo.Database
 }
 
 type MessageUsecase interface {
-	Create(message *Message) error
+	CreateAndUpdateRoom(message *Message) error
 	SoftDelete(messageID bson.ObjectID) error
-	GetByRoomID(roomID uuid.UUID) ([]Message, error)
+	GetByRoomID(roomID bson.ObjectID, limit, offset int64) ([]Message, error)
 	EditMessage(messageID bson.ObjectID, content string) error
 }
 
 type MessageHistoryRequest struct {
-	RoomID uuid.UUID `json:"room_id"`
+	RoomID bson.ObjectID `json:"room_id"`
+	Limit  int64         `json:"limit"`
+	Offset int64         `json:"offset"`
 }

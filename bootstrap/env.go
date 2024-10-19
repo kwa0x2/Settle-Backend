@@ -14,6 +14,8 @@ type Env struct {
 	MongoDBName            string `mapstructure:"MONGO_DB_NAME"`
 	AWSRegion              string `mapstructure:"AWS_REGION"`
 	S3BucketName           string `mapstructure:"S3_BUCKET_NAME"`
+	AWSAccessKeyID         string `mapstructure:"AWS_ACCESS_KEY_ID"`
+	AWSSecretAccessKey     string `mapstructure:"AWS_SECRET_ACCESS_KEY"`
 	AccessTokenExpiryHour  int    `mapstructure:"ACCESS_TOKEN_EXPIRY_HOUR"`
 	RefreshTokenExpiryHour int    `mapstructure:"REFRESH_TOKEN_EXPIRY_HOUR"`
 	AccessTokenSecret      string `mapstructure:"ACCESS_TOKEN_SECRET"`

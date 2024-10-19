@@ -22,7 +22,7 @@ func (adapter *socketAdapter) HandleConnection() {
 	adapter.gateway.OnConnection(func(socketio *socket.Socket) {
 		fmt.Println("connected")
 
-		adapter.gateway.JoinRoom(socketio, "00000000-0000-0000-0000-000000000000")
+		adapter.gateway.JoinRoom(socketio, "000000000000000000000001")
 
 		socketio.On("sendMessage", func(args ...any) {
 			adapter.handleSendMessage(args...)

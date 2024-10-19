@@ -3,11 +3,11 @@ package delivery
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/kwa0x2/Settle-Backend/bootstrap"
 	"github.com/kwa0x2/Settle-Backend/domain"
 	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"github.com/kwa0x2/Settle-Backend/utils"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"net/http"
 	"time"
@@ -61,14 +61,14 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		Role:          types.User,
 	}
 
-	roomId, uuidErr := uuid.Parse("00000000-0000-0000-0000-000000000000")
-	if uuidErr != nil {
-		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Invalid UUID format"})
+	roomID, err := bson.ObjectIDFromHex("00000000-0000-0000-0000-000000000000")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Invalid Object ID format"})
 		return
 	}
 
 	newUserRoom := &domain.UserRoom{
-		RoomID: roomId.String(),
+		RoomID: roomID,
 		UserID: userInfo.ID,
 	}
 

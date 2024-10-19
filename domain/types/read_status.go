@@ -3,6 +3,6 @@ package types
 type ReadStatus string
 
 const (
-	Readed   ReadStatus = "readed"
-	Unreaded ReadStatus = "unreaded"
+	Read   ReadStatus = "read"
+	Unread ReadStatus = "unread"
 )

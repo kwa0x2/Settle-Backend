@@ -18,14 +18,14 @@ type AttachmentDelivery struct {
 func (ad *AttachmentDelivery) Upload(ctx *gin.Context) {
 	file, header, err := ctx.Request.FormFile("file")
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Form File Error: " + err.Error()})
+		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Form File Error: " + err.Error()})
 		return
 	}
 	defer file.Close()
 
 	fileURL, UploadErr := utils.UploadFile(file, header, ad.Env, ad.S3)
 	if UploadErr != nil {
-		ctx.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Error uploading file to S3 bucket"})
+		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: UploadErr.Error()})
 		return
 	}
 
@@ -37,7 +37,7 @@ func (ad *AttachmentDelivery) Upload(ctx *gin.Context) {
 	}
 
 	if UpdateErr := ad.AttachmentUsecase.Create(attachment); UpdateErr != nil {
-		ctx.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Error updating user photo"})
+		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Error updating user photo"})
 		return
 	}
 
