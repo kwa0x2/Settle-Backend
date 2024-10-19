@@ -12,6 +12,8 @@ type Env struct {
 	SteamRedirectUrl       string `mapstructure:"STEAM_REDIRECT_URL"`
 	MongoUri               string `mapstructure:"MONGO_URI"`
 	MongoDBName            string `mapstructure:"MONGO_DB_NAME"`
+	AWSRegion              string `mapstructure:"AWS_REGION"`
+	S3BucketName           string `mapstructure:"S3_BUCKET_NAME"`
 	AccessTokenExpiryHour  int    `mapstructure:"ACCESS_TOKEN_EXPIRY_HOUR"`
 	RefreshTokenExpiryHour int    `mapstructure:"REFRESH_TOKEN_EXPIRY_HOUR"`
 	AccessTokenSecret      string `mapstructure:"ACCESS_TOKEN_SECRET"`

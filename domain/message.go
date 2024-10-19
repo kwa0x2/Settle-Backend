@@ -43,6 +43,7 @@ type MessageUsecase interface {
 	Create(message *Message) error
 	SoftDelete(messageID bson.ObjectID) error
 	GetByRoomID(roomID uuid.UUID) ([]Message, error)
+	EditMessage(messageID bson.ObjectID, content string) error
 }
 
 type MessageHistoryRequest struct {
