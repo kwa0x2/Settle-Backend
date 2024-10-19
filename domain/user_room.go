@@ -14,7 +14,7 @@ const (
 
 type UserRoom struct {
 	ID        bson.ObjectID `bson:"_id,omitempty"`
-	RoomID    string        `bson:"room_id" validate:"required"` // uuid.UUID
+	RoomID    bson.ObjectID `bson:"room_id" validate:"required"`
 	UserID    string        `bson:"user_id" validate:"required"`
 	Visible   bool          `bson:"visible" validate:"required"`
 	CreatedAt time.Time     `bson:"created_at"  validate:"required"`

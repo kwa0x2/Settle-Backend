@@ -9,13 +9,13 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func NewMessageRoute(db *mongo.Database, group *gin.RouterGroup) {
-	mr := repository.NewMessageRepository(db, domain.CollectionMessage)
+func NewRoomRoute(db *mongo.Database, group *gin.RouterGroup) {
 	rr := repository.NewRoomRepository(db, domain.CollectionRoom)
+	mr := repository.NewMessageRepository(db, domain.CollectionMessage)
 
-	md := &delivery.MessageDelivery{
-		MessageUsecase: usecase.NewMessageUsecase(mr, rr),
+	rd := &delivery.RoomDelivery{
+		RoomUsecase: usecase.NewRoomUsecase(rr, mr),
 	}
 
-	group.POST("message/history", md.GetMessageHistory)
+	group.GET("room", rd.GetRooms)
 }

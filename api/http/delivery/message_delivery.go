@@ -13,19 +13,21 @@ type MessageDelivery struct {
 func (md *MessageDelivery) GetMessageHistory(ctx *gin.Context) {
 	var req domain.MessageHistoryRequest
 
-	// Bind JSON request body to the MessageHistoryBody struct.
 	if err := ctx.BindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "JSON Bind Error"})
 		return
 	}
 
-	// Retrieve message history data using the provided room ID.
-	messageHistoryData, err := md.MessageUsecase.GetByRoomID(req.RoomID)
+	messageHistoryData, err := md.MessageUsecase.GetByRoomID(req.RoomID, req.Limit, req.Offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, messageHistoryData)
+	ctx.JSON(http.StatusOK, gin.H{
+		"limit": req.Limit,
+		"page":  req.Offset,
+		"data":  messageHistoryData,
+	})
 
 }

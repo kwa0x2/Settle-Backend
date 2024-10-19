@@ -16,7 +16,7 @@ func Setup(env *bootstrap.Env, db *mongo.Database, router *gin.Engine, server *s
 	})
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:4725"},                            // Allow requests from this origin
+		AllowOrigins:     []string{"http://100.64.75.37:4724"},                         // Allow requests from this origin
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"}, // Allowed HTTP methods
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},          // Allowed headers
 		ExposeHeaders:    []string{"Content-Length"},                                   // Exposed headers to the client
@@ -29,4 +29,6 @@ func Setup(env *bootstrap.Env, db *mongo.Database, router *gin.Engine, server *s
 	NewSocketRoute(server, router, db)
 	NewMessageRoute(db, publicRouter)
 	NewAttachmentRoute(env, db, publicRouter, s3)
+	NewRoomRoute(db, publicRouter)
+
 }
