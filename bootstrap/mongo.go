@@ -2,15 +2,17 @@ package bootstrap
 
 import (
 	"context"
+	"crypto/tls"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
+	"time"
 )
 
 func ConnectMongoDB(env *Env) *mongo.Database {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(env.MongoUri).SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI(env.MongoUri).SetServerAPIOptions(serverAPI).SetConnectTimeout(10 * time.Second).SetTLSConfig(&tls.Config{InsecureSkipVerify: true})
 
 	client, err := mongo.Connect(opts)
 	if err != nil {

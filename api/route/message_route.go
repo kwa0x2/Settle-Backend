@@ -12,9 +12,10 @@ import (
 func NewMessageRoute(db *mongo.Database, group *gin.RouterGroup) {
 	mr := repository.NewMessageRepository(db, domain.CollectionMessage)
 	rr := repository.NewRoomRepository(db, domain.CollectionRoom)
+	ur := repository.NewUserRepository(db, domain.CollectionUser)
 
 	md := &delivery.MessageDelivery{
-		MessageUsecase: usecase.NewMessageUsecase(mr, rr),
+		MessageUsecase: usecase.NewMessageUsecase(mr, rr, ur),
 	}
 
 	group.POST("message/history", md.GetMessageHistory)

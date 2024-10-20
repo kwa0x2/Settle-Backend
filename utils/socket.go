@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"github.com/kwa0x2/Settle-Backend/domain"
-	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"github.com/zishang520/engine.io/utils"
 	socketUtils "github.com/zishang520/engine.io/utils"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -118,27 +117,20 @@ func ParseRepliedMessage(data map[string]interface{}) (*domain.Message, error) {
 		return nil, fmt.Errorf("Invalid replied room ID format")
 	}
 
-	readStatus, err := parseReadStatus(data)
-	if err != nil {
-		return nil, err
+	readStatus, ok := data["read_status"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("Invalid read_status format")
 	}
+
+	fmt.Println("int64(data[\"read_status\"].(float64))", int64(data["read_status"].(float64)))
 
 	return &domain.Message{
 		ID:         repliedMessageID,
 		Content:    ExtractString(data, "content"),
 		SenderID:   ExtractString(data, "sender_id"),
 		RoomID:     roomID,
-		ReadStatus: readStatus,
+		ReadStatus: int64(readStatus),
 		CreatedAt:  time.Now().UTC(),
 		UpdatedAt:  time.Now().UTC(),
 	}, nil
-}
-
-func parseReadStatus(data map[string]interface{}) (types.ReadStatus, error) {
-	if rs, ok := data["read_status"].(string); ok {
-		if rs == string(types.Read) || rs == string(types.Unread) {
-			return types.ReadStatus(rs), nil
-		}
-	}
-	return "", fmt.Errorf("Invalid read_status value")
 }

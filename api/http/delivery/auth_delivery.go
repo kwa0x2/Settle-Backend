@@ -61,7 +61,7 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		Role:          types.User,
 	}
 
-	roomID, err := bson.ObjectIDFromHex("00000000-0000-0000-0000-000000000000")
+	roomID, err := bson.ObjectIDFromHex("000000000000000000000001")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Invalid Object ID format"})
 		return

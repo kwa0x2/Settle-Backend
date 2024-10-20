@@ -14,8 +14,9 @@ import (
 func NewSocketRoute(server *socket.Server, router *gin.Engine, db *mongo.Database) {
 	mr := repository.NewMessageRepository(db, domain.CollectionMessage)
 	rr := repository.NewRoomRepository(db, domain.CollectionRoom)
+	ur := repository.NewUserRepository(db, domain.CollectionUser)
 
-	mu := usecase.NewMessageUsecase(mr, rr)
+	mu := usecase.NewMessageUsecase(mr, rr, ur)
 
 	sg := gateway.NewSocketGateway(server, "/chat")
 	sa := adapter.NewSocketAdapter(sg, mu)

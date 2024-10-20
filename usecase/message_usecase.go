@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"github.com/kwa0x2/Settle-Backend/domain"
-	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
@@ -13,12 +12,14 @@ import (
 type messageUsecase struct {
 	messageRepository domain.MessageRepository
 	roomRepository    domain.RoomRepository
+	userRepository    domain.UserRepository
 }
 
-func NewMessageUsecase(messageRepository domain.MessageRepository, roomRepository domain.RoomRepository) domain.MessageUsecase {
+func NewMessageUsecase(messageRepository domain.MessageRepository, roomRepository domain.RoomRepository, userRepository domain.UserRepository) domain.MessageUsecase {
 	return &messageUsecase{
 		messageRepository: messageRepository,
 		roomRepository:    roomRepository,
+		userRepository:    userRepository,
 	}
 }
 
@@ -38,7 +39,7 @@ func (mu *messageUsecase) CreateAndUpdateRoom(message *domain.Message) error {
 	_, err = session.WithTransaction(ctx, func(txCtx context.Context) (interface{}, error) {
 		message.CreatedAt = time.Now().UTC()
 		message.UpdatedAt = time.Now().UTC()
-		message.ReadStatus = types.Unread
+		message.ReadStatus = 0 //unseen
 		if validateErr := message.Validate(); validateErr != nil {
 			return nil, validateErr
 		}
@@ -82,6 +83,16 @@ func (mu *messageUsecase) GetByRoomID(roomID bson.ObjectID, limit, offset int64)
 	if err != nil {
 		return nil, err
 	}
+
+	//for i, message := range result {
+	//	filter := bson.D{{"_id", message.SenderID}}
+	//	user, err := mu.userRepository.FindOne(ctx, filter)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	result[i].User = &user
+	//}
+
 	return result, err
 }
 
