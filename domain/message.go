@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"github.com/go-playground/validator/v10"
-	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -15,16 +14,18 @@ const (
 )
 
 type Message struct {
-	ID             bson.ObjectID    `bson:"_id,omitempty"`
-	Content        string           `bson:"content,omitempty"`
-	SenderID       string           `bson:"sender_id" validate:"required"`
-	RoomID         bson.ObjectID    `bson:"room_id" validate:"required"`
-	RepliedMessage *Message         `bson:"replied_message,omitempty"` // Referans verilen mesaj
-	Attachment     *Attachment      `bson:"attachment,omitempty"`      // Eklenen dosya
-	ReadStatus     types.ReadStatus `bson:"read_status" validate:"required"`
-	CreatedAt      time.Time        `bson:"created_at"  validate:"required"`
-	UpdatedAt      time.Time        `bson:"updated_at"  validate:"required"`
-	DeletedAt      *time.Time       `bson:"deleted_at,omitempty"`
+	ID             bson.ObjectID `bson:"_id,omitempty"`
+	Content        string        `bson:"content,omitempty"`
+	SenderID       string        `bson:"sender_id" validate:"required"`
+	RoomID         bson.ObjectID `bson:"room_id" validate:"required"`
+	RepliedMessage *Message      `bson:"replied_message,omitempty"` // Referans verilen mesaj
+	Attachment     *Attachment   `bson:"attachment,omitempty"`      // Eklenen dosya
+	ReadStatus     int64         `bson:"read_status"`
+	CreatedAt      time.Time     `bson:"created_at"  validate:"required"`
+	UpdatedAt      time.Time     `bson:"updated_at"  validate:"required"`
+	DeletedAt      *time.Time    `bson:"deleted_at,omitempty"`
+
+	User *User `bson:"user,omitempty"`
 }
 
 func (m *Message) Validate() error {

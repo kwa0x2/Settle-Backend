@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-playground/validator/v10"
 	"github.com/kwa0x2/Settle-Backend/domain/types"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"time"
 )
@@ -31,6 +32,7 @@ func (u *User) Validate() error {
 
 type UserRepository interface {
 	Create(ctx context.Context, user *User) error
+	FindOne(ctx context.Context, filter bson.D) (User, error)
 	GetDatabase() *mongo.Database
 }
 

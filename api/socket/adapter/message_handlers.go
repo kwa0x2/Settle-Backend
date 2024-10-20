@@ -54,6 +54,7 @@ func (adapter *socketAdapter) handleSendMessage(args ...any) {
 }
 
 func (adapter *socketAdapter) SendMessage(message *domain.Message) error {
+
 	err := adapter.messageUsecase.CreateAndUpdateRoom(message)
 	if err != nil {
 		fmt.Println("error creating message:", err)
