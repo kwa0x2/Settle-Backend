@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"github.com/kwa0x2/Settle-Backend/domain"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 	"time"
@@ -47,13 +49,21 @@ func (uu *userUsecase) CreateAndJoinRoom(user *domain.User, userRoom *domain.Use
 	defer session.EndSession(ctx)
 
 	_, err = session.WithTransaction(ctx, func(txCtx context.Context) (interface{}, error) {
+		filter := bson.D{{"_id", user.ID}}
 		user.CreatedAt = time.Now().UTC()
 		user.UpdatedAt = time.Now().UTC()
-		if validateErr := user.Validate(); validateErr != nil {
-			return nil, validateErr
-		}
-		if userCreateErr := uu.userRepository.Create(txCtx, user); userCreateErr != nil {
-			return nil, userCreateErr
+		existUser, findErr := uu.userRepository.FindOne(txCtx, filter)
+		if findErr == nil {
+			user.Role = existUser.Role
+		} else if errors.Is(findErr, mongo.ErrNoDocuments) {
+			if validateErr := user.Validate(); validateErr != nil {
+				return nil, validateErr
+			}
+			if userCreateErr := uu.userRepository.Create(txCtx, user); userCreateErr != nil {
+				return nil, userCreateErr
+			}
+		} else {
+			return nil, findErr
 		}
 
 		userRoom.UserID = user.ID

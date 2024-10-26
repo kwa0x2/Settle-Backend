@@ -10,6 +10,7 @@ type Env struct {
 	ServerAddress          string `mapstructure:"SERVER_ADDRESS"`
 	SteamApiKey            string `mapstructure:"STEAM_API_KEY"`
 	SteamRedirectUrl       string `mapstructure:"STEAM_REDIRECT_URL"`
+	RedirectLoginUrl       string `mapstructure:"REDIRECT_LOGIN_URL"`
 	MongoUri               string `mapstructure:"MONGO_URI"`
 	MongoDBName            string `mapstructure:"MONGO_DB_NAME"`
 	AWSRegion              string `mapstructure:"AWS_REGION"`

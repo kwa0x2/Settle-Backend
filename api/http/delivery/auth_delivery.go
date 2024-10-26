@@ -72,6 +72,8 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		UserID: userInfo.ID,
 	}
 
+	err = ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
+
 	accessToken, accessTokenErr := utils.CreateAccessToken(newUser, ad.Env.AccessTokenSecret, ad.Env.AccessTokenExpiryHour)
 	if accessTokenErr != nil {
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: accessTokenErr.Error()})
@@ -84,10 +86,9 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
-	redirectUrl := fmt.Sprintf("http://100.64.75.37:4724/en/auth/login?access=%s&refresh=%s", accessToken, refreshToken)
+	redirectUrl := fmt.Sprintf("%s?access=%s&refresh=%s", ad.Env.RedirectLoginUrl, accessToken, refreshToken)
 
 	fmt.Println(redirectUrl)
-	err = ad.UserUsecase.CreateAndJoinRoom(newUser, newUserRoom)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			time.Sleep(1000 * time.Millisecond)
