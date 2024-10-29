@@ -15,7 +15,6 @@ const (
 type Room struct {
 	ID            bson.ObjectID `bson:"_id,omitempty"`
 	CreatedUserID string        `bson:"created_user_id"   validate:"required"`
-	LastMessageID bson.ObjectID `bson:"last_message_id"   validate:"required"`
 	CreatedAt     time.Time     `bson:"created_at"  validate:"required"`
 	UpdatedAt     time.Time     `bson:"updated_at"  validate:"required"`
 	DeletedAt     *time.Time    `bson:"deleted_at,omitempty"`

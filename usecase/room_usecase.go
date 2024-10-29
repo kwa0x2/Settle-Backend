@@ -30,14 +30,5 @@ func (ru *roomUsecase) FindAll() ([]domain.Room, error) {
 		return nil, err
 	}
 
-	for i, room := range result {
-		filter := bson.D{{"_id", room.LastMessageID}}
-		lastMessage, err := ru.messageRepository.FindOne(ctx, filter)
-		if err != nil {
-			return nil, err
-		}
-		result[i].LastMessage = &lastMessage
-	}
-
 	return result, err
 }

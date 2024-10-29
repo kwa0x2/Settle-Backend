@@ -20,25 +20,25 @@ func NewSocketAdapter(gateway domain.SocketGateway, messageUsecase domain.Messag
 
 func (adapter *socketAdapter) HandleConnection() {
 	adapter.gateway.OnConnection(func(socketio *socket.Socket) {
-		user, ok := socketio.Data().(*domain.User)
-		if !ok {
-			fmt.Println("User not found in socket data")
-			return
-		}
+		//user, ok := socketio.Data().(*domain.User)
+		//if !ok {
+		//	fmt.Println("User not found in socket data")
+		//	return
+		//}
 
-		fmt.Println("Connected user:", user)
+		fmt.Println("Connected user:", "")
 
 		adapter.gateway.JoinRoom(socketio, "000000000000000000000001")
 
-		socketio.On("sendMessage", func(args ...any) {
+		socketio.On("SendMessage", func(args ...any) {
 			adapter.handleSendMessage(args...)
 		})
 
-		socketio.On("deleteMessage", func(args ...any) {
+		socketio.On("DeleteMessage", func(args ...any) {
 			adapter.handleDeleteMessage(args...)
 		})
 
-		socketio.On("editMessage", func(args ...any) {
+		socketio.On("EditMessage", func(args ...any) {
 			adapter.handleEditMessage(args...)
 		})
 	})

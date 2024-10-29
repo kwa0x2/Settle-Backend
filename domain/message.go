@@ -16,16 +16,14 @@ const (
 type Message struct {
 	ID             bson.ObjectID `bson:"_id,omitempty"`
 	Content        string        `bson:"content,omitempty"`
-	SenderID       string        `bson:"sender_id" validate:"required"`
+	Sender         *User         `bson:"sender" validate:"required"`
 	RoomID         bson.ObjectID `bson:"room_id" validate:"required"`
 	RepliedMessage *Message      `bson:"replied_message,omitempty"` // Referans verilen mesaj
 	Attachment     *Attachment   `bson:"attachment,omitempty"`      // Eklenen dosya
-	ReadStatus     int64         `bson:"read_status"`
+	ReadStatus     int           `bson:"read_status"`
 	CreatedAt      time.Time     `bson:"created_at"  validate:"required"`
 	UpdatedAt      time.Time     `bson:"updated_at"  validate:"required"`
 	DeletedAt      *time.Time    `bson:"deleted_at,omitempty"`
-
-	User *User `bson:"user,omitempty"`
 }
 
 func (m *Message) Validate() error {
@@ -49,7 +47,7 @@ type MessageUsecase interface {
 }
 
 type MessageHistoryRequest struct {
-	RoomID bson.ObjectID `json:"room_id"`
-	Limit  int64         `json:"limit"`
-	Offset int64         `json:"offset"`
+	RoomID bson.ObjectID `json:"RoomID"`
+	Limit  int64         `json:"Limit"`
+	Offset int64         `json:"Offset"`
 }
