@@ -89,48 +89,106 @@ func ExtractString(data map[string]interface{}, key string) string {
 	return ""
 }
 
+func ExtractTime(data map[string]interface{}, key string) *time.Time {
+	if value, ok := data[key].(string); ok {
+		parsedTime, err := time.Parse(time.RFC3339, value) // rfc3339=2024-10-29T19:07:38.9537926Z
+		if err == nil {
+			return &parsedTime
+		}
+	}
+	return nil
+}
+
 func ParseAttachment(data map[string]interface{}) (*domain.Attachment, error) {
-	attachmentID, err := ParseObjectIDFromData(data, "id")
+	attachmentID, err := ParseObjectIDFromData(data, "ID")
 	if err != nil {
-		return nil, fmt.Errorf("Invalid attachment ID format")
+		return nil, fmt.Errorf("invalid attachment ID format")
+	}
+
+	size, ok := data["Size"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("invalid Size format")
+	}
+
+	createdAt := ExtractTime(data, "CreatedAt")
+	if createdAt == nil {
+		return nil, fmt.Errorf("invalid or missing CreatedAt field")
+	}
+
+	updatedAt := ExtractTime(data, "UpdatedAt")
+	if updatedAt == nil {
+		return nil, fmt.Errorf("invalid or missing UpdatedAt field")
 	}
 
 	return &domain.Attachment{
 		ID:          attachmentID,
-		Filename:    ExtractString(data, "filename"),
-		Size:        int64(data["size"].(float64)),
-		Url:         ExtractString(data, "url"),
-		ContentType: ExtractString(data, "content_type"),
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
+		Filename:    ExtractString(data, "Filename"),
+		Size:        int64(size),
+		Url:         ExtractString(data, "Url"),
+		ContentType: ExtractString(data, "ContentType"),
+		CreatedAt:   *createdAt,
+		UpdatedAt:   *updatedAt,
+	}, nil
+}
+
+func ParseUser(data map[string]interface{}) (*domain.User, error) {
+	totalPlaytime, ok := data["TotalPlaytime"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("Invalid TotalPlaytime format")
+	}
+
+	createdAt := ExtractTime(data, "CreatedAt")
+	if createdAt == nil {
+		return nil, fmt.Errorf("Invalid or missing CreatedAt field")
+	}
+
+	updatedAt := ExtractTime(data, "UpdatedAt")
+	if updatedAt == nil {
+		return nil, fmt.Errorf("Invalid or missing UpdatedAt field")
+	}
+
+	return &domain.User{
+		ID:            ExtractString(data, "ID"),
+		Name:          ExtractString(data, "Name"),
+		Avatar:        ExtractString(data, "Avatar"),
+		ProfileURL:    ExtractString(data, "ProfileURL"),
+		TotalPlaytime: int(totalPlaytime),
+		CreatedAt:     *createdAt,
+		UpdatedAt:     *updatedAt,
 	}, nil
 }
 
 func ParseRepliedMessage(data map[string]interface{}) (*domain.Message, error) {
-	repliedMessageID, err := ParseObjectIDFromData(data, "id")
+	repliedMessageID, err := ParseObjectIDFromData(data, "ID")
 	if err != nil {
 		return nil, fmt.Errorf("Invalid replied message ID format")
 	}
 
-	roomID, err := ParseObjectIDFromData(data, "room_id")
+	roomID, err := ParseObjectIDFromData(data, "RoomID")
 	if err != nil {
 		return nil, fmt.Errorf("Invalid replied room ID format")
 	}
 
-	readStatus, ok := data["read_status"].(float64)
-	if !ok {
-		return nil, fmt.Errorf("Invalid read_status format")
+	sender, err := ParseUser(data["Sender"].(map[string]interface{}))
+	if err != nil {
+		return nil, fmt.Errorf("Invalid sender format22")
 	}
 
-	fmt.Println("int64(data[\"read_status\"].(float64))", int64(data["read_status"].(float64)))
+	readStatus, ok := data["ReadStatus"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("Invalid ReadStatus format2")
+	}
+
+	createdAt := ExtractTime(data, "CreatedAt")
+	updatedAt := ExtractTime(data, "UpdatedAt")
 
 	return &domain.Message{
 		ID:         repliedMessageID,
-		Content:    ExtractString(data, "content"),
-		SenderID:   ExtractString(data, "sender_id"),
+		Content:    ExtractString(data, "Content"),
+		Sender:     sender,
 		RoomID:     roomID,
-		ReadStatus: int64(readStatus),
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
+		ReadStatus: int(readStatus),
+		CreatedAt:  *createdAt,
+		UpdatedAt:  *updatedAt,
 	}, nil
 }

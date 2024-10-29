@@ -1,11 +1,9 @@
 package delivery
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/kwa0x2/Settle-Backend/bootstrap"
 	"github.com/kwa0x2/Settle-Backend/domain"
-	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"github.com/kwa0x2/Settle-Backend/utils"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -58,7 +56,6 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		Avatar:        userInfo.Avatar,
 		ProfileURL:    userInfo.ProfileURL,
 		TotalPlaytime: totalPlayTime,
-		Role:          types.User,
 	}
 
 	roomID, err := bson.ObjectIDFromHex("000000000000000000000001")
@@ -86,20 +83,23 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 		return
 	}
 
-	redirectUrl := fmt.Sprintf("%s?access=%s&refresh=%s", ad.Env.RedirectLoginUrl, accessToken, refreshToken)
-
-	fmt.Println(redirectUrl)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			time.Sleep(1000 * time.Millisecond)
-			ctx.Redirect(http.StatusTemporaryRedirect, redirectUrl)
+			ctx.JSON(http.StatusTemporaryRedirect, gin.H{
+				"access":  accessToken,
+				"refresh": refreshToken,
+			})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "An error occurred while creating the user and joining the room: " + err.Error()})
 		return
 	}
 
-	ctx.Redirect(http.StatusTemporaryRedirect, redirectUrl)
+	ctx.JSON(http.StatusTemporaryRedirect, gin.H{
+		"access":  accessToken,
+		"refresh": refreshToken,
+	})
 }
 
 func (ad *AuthDelivery) RefreshToken(ctx *gin.Context) {

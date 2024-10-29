@@ -77,21 +77,12 @@ func (mu *messageUsecase) GetByRoomID(roomID bson.ObjectID, limit, offset int64)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	opts := options.Find().SetSort(bson.D{{"created_at", 1}}).SetLimit(limit).SetSkip(offset)
+	opts := options.Find().SetSort(bson.D{{"created_at", -1}}).SetLimit(limit).SetSkip(offset)
 	filter := bson.D{{"room_id", roomID}}
 	result, err := mu.messageRepository.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
-
-	//for i, message := range result {
-	//	filter := bson.D{{"_id", message.SenderID}}
-	//	user, err := mu.userRepository.FindOne(ctx, filter)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	result[i].User = &user
-	//}
 
 	return result, err
 }

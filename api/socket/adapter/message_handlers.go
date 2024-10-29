@@ -15,19 +15,27 @@ func (adapter *socketAdapter) handleSendMessage(args ...any) {
 		return
 	}
 
-	roomID, err := utils.ParseObjectIDFromData(data, "room_id")
+	roomID, err := utils.ParseObjectIDFromData(data, "RoomID")
 	if err != nil {
 		su.Log().Error("Invalid room ID format")
 		return
 	}
 
-	message := &domain.Message{
-		Content:  utils.ExtractString(data, "content"),
-		SenderID: utils.ExtractString(data, "sender_id"),
-		RoomID:   roomID,
+	su.Log().Info("Parsing sender: %+v", data["Sender"])
+
+	sender, err := utils.ParseUser(data["Sender"].(map[string]interface{}))
+	if err != nil {
+		su.Log().Error("Invalid sender format")
+		return
 	}
 
-	if attachmentData, ok := data["attachment"].(map[string]interface{}); ok {
+	message := &domain.Message{
+		Content: utils.ExtractString(data, "Content"),
+		Sender:  sender,
+		RoomID:  roomID,
+	}
+
+	if attachmentData, ok := data["Attachment"].(map[string]interface{}); ok {
 		attachment, err := utils.ParseAttachment(attachmentData)
 		if err != nil {
 			su.Log().Error(err.Error())
@@ -36,7 +44,7 @@ func (adapter *socketAdapter) handleSendMessage(args ...any) {
 		message.Attachment = attachment
 	}
 
-	if repliedMessageData, ok := data["replied_message"].(map[string]interface{}); ok {
+	if repliedMessageData, ok := data["RepliedMessage"].(map[string]interface{}); ok {
 		repliedMessage, err := utils.ParseRepliedMessage(repliedMessageData)
 		if err != nil {
 			su.Log().Error(err.Error())
@@ -61,7 +69,12 @@ func (adapter *socketAdapter) SendMessage(message *domain.Message) error {
 		return err
 	}
 
-	adapter.gateway.EmitRoom(message.RoomID.Hex(), "message", message)
+	notifyData := map[string]interface{}{
+		"Action":  "NewMessage",
+		"Message": message,
+	}
+
+	adapter.gateway.EmitRoom(message.RoomID.Hex(), "Message", notifyData)
 	return nil
 }
 
@@ -72,13 +85,13 @@ func (adapter *socketAdapter) handleDeleteMessage(args ...any) {
 		return
 	}
 
-	roomID, err := utils.ParseObjectIDFromData(data, "room_id")
+	roomID, err := utils.ParseObjectIDFromData(data, "RoomID")
 	if err != nil {
 		su.Log().Error("Invalid room ID format")
 		return
 	}
 
-	messageID, err := utils.ParseObjectIDFromData(data, "message_id")
+	messageID, err := utils.ParseObjectIDFromData(data, "MessageID")
 	if err != nil {
 		su.Log().Error(err.Error())
 		return
@@ -101,11 +114,12 @@ func (adapter *socketAdapter) DeleteMessage(messageID, roomID bson.ObjectID) err
 	}
 
 	notifyData := map[string]interface{}{
-		"message_id": messageID.Hex(),
-		"room_id":    roomID.Hex(),
+		"Action":    "DeleteMessage",
+		"MessageID": messageID.Hex(),
+		"RoomID":    roomID.Hex(),
 	}
 
-	adapter.gateway.EmitRoom(roomID.Hex(), "delete_message", notifyData)
+	adapter.gateway.EmitRoom(roomID.Hex(), "Message", notifyData)
 	return nil
 }
 
@@ -116,19 +130,19 @@ func (adapter *socketAdapter) handleEditMessage(args ...any) {
 		return
 	}
 
-	roomID, err := utils.ParseObjectIDFromData(data, "room_id")
+	roomID, err := utils.ParseObjectIDFromData(data, "RoomID")
 	if err != nil {
 		su.Log().Error("Invalid room ID format")
 		return
 	}
 
-	messageID, err := utils.ParseObjectIDFromData(data, "message_id")
+	messageID, err := utils.ParseObjectIDFromData(data, "MessageID")
 	if err != nil {
 		su.Log().Error(err.Error())
 		return
 	}
 
-	content, ok := data["content"].(string)
+	content, ok := data["Content"].(string)
 	if !ok {
 		su.Log().Error("content must be a string")
 		return
@@ -151,11 +165,12 @@ func (adapter *socketAdapter) EditMessage(messageID, roomID bson.ObjectID, conte
 	}
 
 	notifyData := map[string]interface{}{
-		"room_id":        roomID.Hex(),
-		"message_id":     messageID.Hex(),
-		"edited_message": content,
+		"Action":     "EditMessage",
+		"RoomID":     roomID.Hex(),
+		"MessageID":  messageID.Hex(),
+		"NewContent": content,
 	}
 
-	adapter.gateway.EmitRoom(roomID.Hex(), "edit_message", notifyData)
+	adapter.gateway.EmitRoom(roomID.Hex(), "Message", notifyData)
 	return nil
 }

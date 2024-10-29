@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/kwa0x2/Settle-Backend/domain"
-	"github.com/kwa0x2/Settle-Backend/domain/types"
 	"time"
 )
 
@@ -17,7 +16,7 @@ func CreateAccessToken(user *domain.User, secret string, exp int) (string, error
 	claims := Claims{
 		User: user,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Duration(exp) * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(60 * time.Second)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		},
 	}
@@ -72,7 +71,6 @@ func IsAuthorized(requestToken string, secret string) (*domain.User, error) {
 		Name:       userData["Name"].(string),
 		Avatar:     userData["Avatar"].(string),
 		ProfileURL: userData["ProfileURL"].(string),
-		Role:       types.UserRole(userData["Role"].(string)),
 	}
 	return user, nil
 }

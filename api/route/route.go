@@ -17,14 +17,6 @@ func Setup(env *bootstrap.Env, db *mongo.Database, router *gin.Engine, server *s
 		c.String(http.StatusNotFound, "404 made by kwa -> https://github.com/kwa0x2")
 	})
 
-	//router.Use(cors.New(cors.Config{
-	//	AllowOrigins:     []string{"http://100.64.75.37:4724"},                         // Allow requests from this origin
-	//	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"}, // Allowed HTTP methods
-	//	AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},          // Allowed headers
-	//	ExposeHeaders:    []string{"Content-Length"},                                   // Exposed headers to the client
-	//	AllowCredentials: true,                                                         // Allow credentials in requests
-	//}))
-
 	publicRouter := router.Group("/api/v1")
 
 	NewAuthRoute(env, db, publicRouter)
