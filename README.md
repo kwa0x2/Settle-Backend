@@ -10,6 +10,6 @@ A backend for a gamer-focused chat application where only users with over 500 ho
 
 ## Arch:
 
-This project is structured following the Clean Architecture principles, inspired by ![go-clean-arch](https://github.com/bxcodec/go-clean-arch) by bxcodec. The architecture ensures separation of concerns, making the codebase scalable, maintainable, and testable. Each layer has clearly defined responsibilities, promoting a strong dependency rule from outer to inner layers.
+This project is structured following the Clean Architecture principles, inspired by [go-clean-arch](https://github.com/bxcodec/go-clean-arch) by bxcodec. The architecture ensures separation of concerns, making the codebase scalable, maintainable, and testable. Each layer has clearly defined responsibilities, promoting a strong dependency rule from outer to inner layers.
 
 ![architecture](https://raw.githubusercontent.com/bxcodec/go-clean-arch/master/clean-arch.png)
