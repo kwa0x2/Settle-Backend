@@ -21,8 +21,8 @@ func Setup(env *bootstrap.Env, db *mongo.Database, router *gin.Engine, server *s
 
 	NewAuthRoute(env, db, publicRouter)
 	NewSocketRoute(server, router, db, env)
-	NewMessageRoute(db, publicRouter)
+	NewMessageRoute(db, publicRouter, env)
 	NewAttachmentRoute(env, db, publicRouter, s3)
-	NewRoomRoute(db, publicRouter)
+	NewRoomRoute(db, publicRouter, env)
 
 }

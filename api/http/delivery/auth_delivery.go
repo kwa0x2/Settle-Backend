@@ -46,7 +46,7 @@ func (ad *AuthDelivery) SteamCallback(ctx *gin.Context) {
 	}
 
 	if totalPlayTime < 30000 { // less than 500 hours
-		ctx.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: "Playtime must be more than 500 hours"})
+		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Playtime must be more than 500 hours"})
 		return
 	}
 

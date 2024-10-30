@@ -4,6 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
 	"github.com/kwa0x2/Settle-Backend/api/http/delivery"
+	"github.com/kwa0x2/Settle-Backend/api/middleware"
 	"github.com/kwa0x2/Settle-Backend/bootstrap"
 	"github.com/kwa0x2/Settle-Backend/domain"
 	"github.com/kwa0x2/Settle-Backend/repository"
@@ -19,5 +20,5 @@ func NewAttachmentRoute(env *bootstrap.Env, db *mongo.Database, group *gin.Route
 		Env:               env,
 	}
 
-	group.POST("attachment", md.Upload)
+	group.POST("attachment", middleware.AuthMiddleware(env.AccessTokenSecret), md.Upload)
 }

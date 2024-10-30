@@ -16,7 +16,7 @@ func CreateAccessToken(user *domain.User, secret string, exp int) (string, error
 	claims := Claims{
 		User: user,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(60 * time.Second)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Duration(exp) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		},
 	}
