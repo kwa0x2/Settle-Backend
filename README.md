@@ -8,6 +8,6 @@
 
 ## Arch:
 
-I used this arhitecture by https://github.com/bxcodec/go-clean-arch
+I used this arhitecture https://github.com/bxcodec/go-clean-arch
 
-![architecture]([https://i.hizliresim.com/l4vemkw.png](https://raw.githubusercontent.com/bxcodec/go-clean-arch/master/clean-arch.png))
+![architecture](https://raw.githubusercontent.com/bxcodec/go-clean-arch/master/clean-arch.png)
