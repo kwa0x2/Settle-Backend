@@ -6,7 +6,7 @@ A backend for a gamer-focused chat application where only users with over 500 ho
 
 ## Diagram:
 
-![diagram](https://i.hizliresim.com/l4vemkw.png)
+![diagram](https://github.com/kwa0x2/Settle-Backend/blob/a05fd4bdbd1a41ee45e24c37d5348ad0a83a1075/diagram.png)
 
 ## Arch:
 
